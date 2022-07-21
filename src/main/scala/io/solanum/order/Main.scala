@@ -1,15 +1,16 @@
 package io.solanum.order
 
 import akka.Done
-import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
-import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.actor.typed.scaladsl.AskPattern.{ Askable, schedulerFromActorSystem }
+import akka.actor.typed.{ ActorRef, ActorSystem }
 import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import io.solanum.order.Hospital.GetAllKids
-import io.solanum.order.User.{Birth, Greeting, GreetingNoReply}
+import io.solanum.order.User.{ Birth, Greeting, GreetingNoReply }
 
+import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 /** @author
  *    Chenyu Liu
@@ -32,18 +33,27 @@ object Main {
         // Section 1: Simple usage of messaging between actors
         as3asddd ! GreetingNoReply("Anonymous greeting")
         as3asddd ! Greeting("Hello I am James", james)
+        Thread.sleep(2000)
         // Section 2: Blocking ask
-        as3asddd.ask(Greeting("Hello there???", _)).onComplete {
-          case Success(GreetingNoReply(greet)) =>
-            ctx.log.info(greet)
-          case _ =>
+        val c = Await.result(
+          james.ask(Greeting("Hello there???", _)),
+          timeout.duration
+        )
+        c match {
+          case GreetingNoReply(greet) => ctx.log.info(greet)
+          case _                      =>
         }
+        Thread.sleep(2000)
         val hospital = ctx.spawn(Hospital.apply(), "Hospital")
         as3asddd ! Birth("hhm")
         james ! Birth("hhm")
 //        ctx.log.info(ctx.system.printTree)
         Thread.sleep(10000)
         ctx.log.info("\n" + ctx.system.printTree)
+        for {
+          jamesKids   <- james.ask(User.GetKids)
+          as3asddKids <- as3asddd.ask(User.GetKids)
+        } yield (jamesKids ++ as3asddKids).foreach(kid => ctx.log.info(kid.path.name))
         hospital ! GetAllKids
         Behaviors.same
       },
