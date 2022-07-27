@@ -18,7 +18,7 @@ object Hospital {
 
   def apply(children: Set[ActorRef[Child.Command]] = Set.empty): Behavior[Command] =
     Behaviors.setup[Command] { ctx =>
-      val msgAdaptor = ctx.messageAdapter[Receptionist.Listing](l => ChildBorn(l))
+      val msgAdaptor = ctx.messageAdapter[Receptionist.Listing](ChildBorn)
       ctx.system.receptionist ! Receptionist.Find(Child.SK, msgAdaptor)
       Behaviors.receiveMessage[Command] {
         case ChildBorn(Child.SK.Listing(l)) =>

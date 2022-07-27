@@ -40,15 +40,17 @@ object Main {
           timeout.duration
         )
         c match {
-          case GreetingNoReply(greet) => ctx.log.info(greet)
-          case _                      =>
+          case GreetingNoReply(greet) =>
+            ctx.log.info(greet)
+          case _ =>
         }
         Thread.sleep(2000)
+        // Section 3: Child Actor
         val hospital = ctx.spawn(Hospital.apply(), "Hospital")
         as3asddd ! Birth("hhm")
         james ! Birth("hhm")
-//        ctx.log.info(ctx.system.printTree)
         Thread.sleep(10000)
+        // Section 4: Receptionist
         ctx.log.info("\n" + ctx.system.printTree)
         for {
           jamesKids   <- james.ask(User.GetKids)
