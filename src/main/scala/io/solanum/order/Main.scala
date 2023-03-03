@@ -1,6 +1,7 @@
 package io.solanum.order
 
 import akka.Done
+import akka.actor.typed.receptionist.Receptionist
 import akka.actor.typed.scaladsl.AskPattern.{ Askable, schedulerFromActorSystem }
 import akka.actor.typed.{ ActorRef, ActorSystem }
 import akka.actor.typed.scaladsl.Behaviors
@@ -57,6 +58,10 @@ object Main {
           as3asddKids <- as3asddd.ask(User.GetKids)
         } yield (jamesKids ++ as3asddKids).foreach(kid => ctx.log.info(kid.path.name))
         hospital ! GetAllKids
+        Thread.sleep(10000)
+        // Section 5: Deregister Actor
+        ctx.system.receptionist ! Receptionist.Deregister(Child.SK, ctx.self.unsafeUpcast)
+        ctx.log.info("\n" + ctx.system.printTree)
         Behaviors.same
       },
       "Example"
